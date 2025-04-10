@@ -1,0 +1,61 @@
+import React, { useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
+
+const SplashScreen = ({ navigation }: any) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+
+    const timeout = setTimeout(() => {
+      navigation.replace('Home');
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [navigation]);
+
+  return (
+    <View style={styles.container}>
+      <Animated.Image
+        source={require('../assets/idclap-logo.png')}
+        style={[styles.logo, { opacity: fadeAnim }]}
+        resizeMode="contain"
+      />
+      <ActivityIndicator size="large" color="#fecb03" />
+      <Text style={styles.text}>Loading...</Text>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#6d28d9',
+  },
+  logo: {
+    width: 140,
+    height: 140,
+    marginBottom: 20,
+    color:'#fecb03'
+  },
+  text: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+});
+
+export default SplashScreen;
