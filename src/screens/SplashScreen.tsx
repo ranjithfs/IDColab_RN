@@ -20,7 +20,7 @@ const SplashScreen = ({ navigation }: any) => {
 
     const timeout = setTimeout(() => {
       navigation.replace('Home');
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timeout);
   }, [navigation]);
