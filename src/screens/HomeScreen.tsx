@@ -74,9 +74,9 @@ const HomeScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, padding: 10, backgroundColor: '#facc15' }}>
+    <View style={{ flex: 1, padding: 10, backgroundColor: '#facc15' , justifyContent: loading ? 'center' : 'flex-start'}}>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size={30} color="#000" />
       ) : (
         <FlatList
           style={{ backgroundColor: 'transparent' }}

@@ -33,7 +33,6 @@ const SplashScreen = ({ navigation }: any) => {
         resizeMode="contain"
       />
       <ActivityIndicator size="large" color="#fecb03" />
-      <Text style={styles.text}>Loading...</Text>
     </View>
   );
 };
@@ -43,7 +42,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#6d28d9',
+    backgroundColor: '#fff',
   },
   logo: {
     width: 140,
