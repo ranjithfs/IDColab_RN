@@ -11,7 +11,6 @@ const FullViewModal = ({ visible, onClose, subposts }: {
     onClose: () => void;
     subposts: any[];
 }) => {
-    console.log(subposts);
 
     return (
         <Modal visible={visible} animationType="slide" transparent={false}>

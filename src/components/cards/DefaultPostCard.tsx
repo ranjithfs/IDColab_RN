@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity } from 'react-native';
-import Video from 'react-native-video';
 import moment from 'moment';
 import FullViewModal from './FullViewModal';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -35,9 +34,11 @@ const SubPostCarousel = ({ subposts, onFullView, post }: { subposts: any[]; onFu
         )
         }
         ListEmptyComponent={
-          < View style={styles.centered} >
-            <Text style={styles.centered}>{post.category} Fetching!...</Text>
-          </View >
+          <View style={styles.imageWrapper}>
+            < View style={styles.centered} >
+              <Text>{post.category?.toUpperCase() || 'UNKNOWN CATEGORY'}</Text>
+            </View >
+          </View>
         }
         onViewableItemsChanged={onViewRef.current}
         viewabilityConfig={viewConfigRef.current}
@@ -69,7 +70,7 @@ const DefaultPostCard = ({ post }: any) => {
   return (
     <View style={styles.card}>
       <Text style={styles.meta}>{moment(post.createdAt).fromNow()}</Text>
-      <SubPostCarousel subposts={post.subposts} post={post} onFullView={() => setModalVisible(true)} />
+      <SubPostCarousel subposts={post.subposts || []} post={post} onFullView={() => setModalVisible(true)} />
       <Text style={styles.description}>{post.postDescription}</Text>
       <Text style={styles.tags}>Tagged: {post.taggedEmails?.join(', ')}</Text>
 

@@ -63,6 +63,7 @@ const SubPostCarousel = ({ subposts, onFullView }: { subposts: any[]; onFullView
 };
 
 const ImagePostCard = ({ post }: any) => {
+  
   const [modalVisible, setModalVisible] = React.useState(false);
 
   return (

@@ -1,91 +1,73 @@
-import React, { useEffect, useState } from 'react';
+// src/screens/HomeScreen.tsx
+import React, { useEffect } from 'react';
 import { View, FlatList, ActivityIndicator } from 'react-native';
-import { fetchPosts, fetchSubPosts, getCloudFrontUrl } from '../services/apiService';
+import {
+  useFetchAllPostsQuery,
+  useLazyFetchSubPostsQuery,
+} from '../services/apiSlice';
+import {
+  setAllPosts,
+  appendNextBatch,
+  enrichVisiblePost,
+} from '../features/posts/postsSlice';
+import {
+  selectVisiblePosts,
+  selectHasMore,
+} from '../features/posts/postsSelectors';
+import { getCloudFrontUrl } from '../services/apiService';
 import PostCardFactory from '../components/PostCardFactory';
-
-const BATCH_SIZE = 3;
+import { useAppDispatch, useAppSelector } from '../hook';
 
 const HomeScreen = () => {
-  const [allPosts, setAllPosts] = useState<any[]>([]);
-  const [visiblePosts, setVisiblePosts] = useState<any[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const dispatch = useAppDispatch();
+  const visiblePosts = useAppSelector(selectVisiblePosts);
+  const hasMore = useAppSelector(selectHasMore);
+  const { data: allPosts = [], isLoading } = useFetchAllPostsQuery();
+  const [fetchSubPosts] = useLazyFetchSubPostsQuery();
 
-  // Initial load
   useEffect(() => {
-    const loadInitialPosts = async () => {
-      const posts = await fetchPosts();
-      let parsed = [];
+    if (allPosts.length > 0) {
+      dispatch(setAllPosts(allPosts));
+      dispatch(appendNextBatch());
+    }
+  }, [allPosts]);
 
-      try {
-        parsed = JSON.parse(posts)?.data || posts;
-      } catch (err) {
-        parsed = posts;
-      }
-
-      setAllPosts(parsed);
-      await loadMorePosts(parsed, 0); // First batch
-      setLoading(false);
-    };
-
-    loadInitialPosts();
-  }, []);
-
-  // Load 3 more posts
-  const loadMorePosts = async (posts: any[], currentOffset: number) => {
-    if (isFetchingMore || currentOffset >= posts.length) return;
-
-    setIsFetchingMore(true);
-    const nextBatch = posts.slice(currentOffset, currentOffset + BATCH_SIZE);
-
-    const enriched = await Promise.all(
-      nextBatch.map(async (post) => {
-        const subposts = await fetchSubPosts(post.postId);
-        let parsed = [];
-        try {
-          parsed = JSON.parse(subposts)?.subposts || subposts;
-        } catch (err) {
-          parsed = subposts;
-        }
-
-        return {
-          ...post,
-          subposts: parsed.map((sp: any) => ({
-            ...sp,
-            imageUrl: getCloudFrontUrl(sp.fileS3Id) || '',
-          })),
-        };
-      })
-    );
-
-    console.log(enriched);
-
-
-    setVisiblePosts((prev) => [...prev, ...enriched]);
-    setOffset(currentOffset + BATCH_SIZE);
-    setIsFetchingMore(false);
+  const loadMore = () => {
+    if (hasMore) {
+      dispatch(appendNextBatch());
+    }
   };
 
-  const handleEndReached = () => {
-    if (!isFetchingMore && offset < allPosts.length) {
-      loadMorePosts(allPosts, offset);
+  const handleViewableItemsChanged = async ({ changed }: any) => {
+    for (const item of changed) {
+      const post = item.item;
+      if (!post.subposts) {
+        const sub = await fetchSubPosts(post.postId).unwrap();
+        dispatch(enrichVisiblePost({
+          postId: post.postId,
+          subposts: sub.map((sp: any) => ({
+            ...sp,
+            imageUrl: getCloudFrontUrl(sp.fileS3Id),
+          })),
+        }));
+      }
     }
   };
 
   return (
-    <View style={{ flex: 1, padding: 10, backgroundColor: '#facc15' , justifyContent: loading ? 'center' : 'flex-start'}}>
-      {loading ? (
+    <View style={{ flex: 1, padding: 10, backgroundColor: '#facc15', justifyContent: isLoading ? 'center' : 'flex-start' }}>
+      {isLoading ? (
         <ActivityIndicator size={30} color="#000" />
       ) : (
         <FlatList
-          style={{ backgroundColor: 'transparent' }}
           data={visiblePosts}
           keyExtractor={(item, index) => `${item.postId}-${index}`}
           renderItem={({ item }) => <PostCardFactory post={item} />}
-          onEndReached={handleEndReached}
-          onEndReachedThreshold={0.1} // Load more only when truly near end
-          ListFooterComponent={isFetchingMore ? <ActivityIndicator size="small" color="#888" /> : null}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.1}
+          ListFooterComponent={hasMore ? <ActivityIndicator size="small" color="#888" /> : null}
+          onViewableItemsChanged={handleViewableItemsChanged}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         />
       )}
     </View>
